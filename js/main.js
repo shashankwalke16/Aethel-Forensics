@@ -48,6 +48,14 @@ TODO LIST & NOTES:
   const hexViewTab = document.getElementById('tab-hex-view');
   const evidenceItems = document.querySelectorAll('.evidence-item');
 
+  // Decryption Console DOM Elements
+  const decryptTargetInput = document.getElementById('decrypt-target');
+  const decryptKeyInput = document.getElementById('decrypt-key');
+  const decryptMethodSelect = document.getElementById('decrypt-method');
+  const decryptBtn = document.getElementById('btn-run-decrypt');
+  const decryptedOutputElement = document.getElementById('decrypted-output');
+  const copyDecryptedBtn = document.getElementById('copy-decrypted-btn');
+
   // Format string as formatted Hex View
   function generateHexDump(str) {
     const lines = [];
@@ -99,6 +107,11 @@ TODO LIST & NOTES:
     } else {
       fileContentElement.textContent = file.rawText;
     }
+
+    // Also update decryption target input
+    if (decryptTargetInput) {
+      decryptTargetInput.value = file.filename;
+    }
   }
 
   // Handle Evidence Selection
@@ -146,6 +159,118 @@ TODO LIST & NOTES:
         }, 2000);
       }).catch(err => {
         console.error('Failed to copy: ', err);
+      });
+    });
+  }
+
+  // XOR Repeating Key Decryption
+  function decryptXOR(base64str, keyStr) {
+    try {
+      const binaryString = window.atob(base64str);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      
+      if (!keyStr) {
+        return {
+          success: false,
+          text: "[!] ERROR: Decryption key cannot be empty. Please enter a valid XOR key."
+        };
+      }
+      
+      const decryptedBytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        decryptedBytes[i] = bytes[i] ^ keyStr.charCodeAt(i % keyStr.length);
+      }
+      
+      const decoder = new TextDecoder('utf-8');
+      const decryptedText = decoder.decode(decryptedBytes);
+      
+      // Safety check: verify printable ASCII ratio
+      let printableCount = 0;
+      for (let i = 0; i < decryptedText.length; i++) {
+        const code = decryptedText.charCodeAt(i);
+        if ((code >= 32 && code <= 126) || code === 10 || code === 13 || code === 9) {
+          printableCount++;
+        }
+      }
+      
+      const printableRatio = printableCount / decryptedText.length;
+      const isPrintable = printableRatio > 0.85;
+      
+      if (!isPrintable) {
+        return {
+          success: false,
+          text: `[!] WARNING: Decrypted stream contains non-printable binary data (printable ratio: ${(printableRatio * 100).toFixed(1)}%).\nThe decryption key might be incorrect or the method is invalid.\n\nRaw Decrypted Bytes (Hex-Encoded Representation):\n${Array.from(decryptedBytes).map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ')}\n\nGarbled Text Output:\n${decryptedText}`
+        };
+      }
+      
+      return {
+        success: true,
+        text: decryptedText
+      };
+    } catch (err) {
+      return {
+        success: false,
+        text: "[!] ERROR during Base64 / XOR decoding: " + err.message
+      };
+    }
+  }
+
+  // Execute Decryption button
+  if (decryptBtn) {
+    decryptBtn.addEventListener('click', () => {
+      const file = evidenceFiles[activeFileId];
+      if (!file) return;
+      
+      // If file is sticky note / plaintext
+      if (activeFileId === 'sticky_note_scan.txt') {
+        decryptedOutputElement.style.color = 'var(--accent-cyan)';
+        decryptedOutputElement.textContent = `[INFO] Target artifact '${file.filename}' is not encrypted.\n\nRaw Content:\n${file.rawText}`;
+        return;
+      }
+      
+      const method = decryptMethodSelect.value;
+      if (method === 'base64') {
+        try {
+          const decoded = window.atob(file.rawText);
+          decryptedOutputElement.style.color = 'var(--accent-cyan)';
+          decryptedOutputElement.textContent = `[INFO] Base64 decoding successful. Showing raw decoded binary representation (un-XORed):\n\n${decoded}`;
+        } catch (e) {
+          decryptedOutputElement.style.color = 'var(--accent-red)';
+          decryptedOutputElement.textContent = `[!] ERROR: Base64 decode failed: ${e.message}`;
+        }
+      } else if (method === 'xor') {
+        const key = decryptKeyInput.value.trim();
+        const result = decryptXOR(file.rawText, key);
+        if (result.success) {
+          decryptedOutputElement.style.color = 'var(--accent-emerald)';
+        } else {
+          decryptedOutputElement.style.color = 'var(--accent-amber)';
+        }
+        decryptedOutputElement.textContent = result.text;
+      }
+    });
+  }
+
+  // Copy Decrypted Content Button
+  if (copyDecryptedBtn) {
+    copyDecryptedBtn.addEventListener('click', () => {
+      const textToCopy = decryptedOutputElement.textContent;
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        const originalText = copyDecryptedBtn.innerHTML;
+        copyDecryptedBtn.innerHTML = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg> Copied!
+        `;
+        setTimeout(() => {
+          copyDecryptedBtn.innerHTML = originalText;
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy decrypted content: ', err);
       });
     });
   }

@@ -596,3 +596,118 @@ body {
   margin-top: auto;
   font-family: var(--font-mono);
 }
+
+/* Decryption Console Styles */
+.decryption-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .decryption-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.decryption-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.control-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.form-input, .form-select {
+  background-color: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input:focus, .form-select:focus {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 2px var(--accent-cyan-glow);
+}
+
+.form-input[readonly] {
+  background-color: rgba(15, 22, 36, 0.4);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, var(--accent-cyan) 0%, #0891b2 100%);
+  color: #ffffff;
+  border: 1px solid #22d3ee;
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(180deg, #0891b2 0%, #0e7490 100%);
+  border-color: #67e8f9;
+}
+
+.decryption-output-wrapper {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-dark);
+  overflow: hidden;
+}
+
+.output-header {
+  background: rgba(21, 29, 48, 0.5);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.45rem 0.75rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.decrypted-content-container {
+  padding: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  min-height: 180px;
+  max-height: 280px;
+  overflow-y: auto;
+  color: var(--accent-cyan);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
